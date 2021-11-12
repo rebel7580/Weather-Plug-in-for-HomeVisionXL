@@ -1,0 +1,86 @@
+# Weather websocket plugin for HomeVision - Ron Boston
+# Version 5.0
+# $Revision: 1.2 $
+# $Date: 2013/02/10 21:15:04 $
+# $Requires: HomeVisionXL 2.1 $
+
+hvGuiInit
+
+hvImport debug
+hvImport WeatherSet
+hvImport get_update
+hvImport wsputs
+
+hvPublic ws_weather websocket rw
+hvPublic wsro_weather websocket ro
+
+
+proc jsonobjlist {type list} {
+    foreach n [lsearch -all -exact $list ""] {lset list $n {""}}
+    return [format {"%s":{"state":[%s]}} $type [join $list ,]]
+}
+
+proc websocket {access id args {data ""}} {
+    global wsclients
+    if {$data ne ""} {
+	# Command
+	set cmd [split $data]
+	switch -- [lindex $cmd 0]:$access {
+	    events:rw - events:ro {
+		events $id [lindex $cmd 1]
+	    }
+	    WeatherSet:rw {
+		catch $cmd
+	    }
+	    WeatherSet:ro {
+		debug "$id: action ignored - user doesn't have write access"
+	    }
+	}
+    } elseif {[llength [info level 0]] < 4} {
+	# Socket closed
+	dict unset wsclients $id
+	debug wsclients:$wsclients
+    } else {
+	# Socket opened
+    	dict set wsclients $id {}
+    }
+}
+
+proc events {id list} {
+    global wsclients state
+    dict set wsclients $id [split $list ,]
+    dict for {type list} $state {
+	if {$type in [dict get $wsclients $id]} {
+    	    lappend data [jsonobjlist $type $list]
+	}
+    }
+    if {[info exists data]} {wsputs $id "{[join $data ,]}"}
+}
+
+proc initialize {args} {
+    global state wsclients
+    debug "wx init" red
+    # Only run once
+    trace remove variable wsclients write initialize
+    get_update
+}
+
+hvPublic wsupdate
+proc wsupdate {type list} {
+    global state wsclients
+    debug "wx wsupdate: $type, $list" blue
+    dict set state $type $list
+    if {[dict size $wsclients] > 0} {
+	set data "{[jsonobjlist $type $list]}"
+	foreach id [dict keys $wsclients] {
+	    if {"$type" in [dict get $wsclients $id]} {
+    		wsputs $id $data
+	    }
+	}
+    }
+}
+
+set state {}
+set wsclients {}
+# Quickly get up to speed when the first client connects
+trace add variable wsclients write initialize
