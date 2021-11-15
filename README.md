@@ -24,11 +24,11 @@ The plug-in should be enabled via the Plug-in manager.
 
 # Change Log
 
-The Change Log can be found in the Wiki section TBD [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Introduction-to-the-Weather-Plug-in).
+The Change Log can be found in the Wiki section TBD [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Change-Log).
 
 # Help
 
 Complete Help is available through the plug-in.
-Partial Help can be found [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Help).
+Partial Help can be found [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Introduction-to-the-Weather-Plug-in)).
 The help file is very detailed. Please read it throughly to properly set up your devices.
 
