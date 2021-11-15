@@ -24,7 +24,7 @@ The plug-in should be enabled via the Plug-in manager.
 
 # Change Log
 
-The Change Log can be found in the Wiki section TBD [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Change-Log).
+The Change Log can be found in the Wiki [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Change-Log).
 
 # Help
 
