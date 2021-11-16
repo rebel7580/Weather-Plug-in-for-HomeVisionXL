@@ -1,4 +1,4 @@
-# Weather-Plug-in-for-HomeVisionXL
+# Weather Plug-in for HomeVisionXL
 
 **Please report issues via the homevision users group**
 
