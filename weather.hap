@@ -1,11 +1,11 @@
 #! Weather plug-in - Ron Boston
 #
 # Version: 5.3b
-# $Revision: 1.59 $
-# $Date: 2021/12/10 17:19:23 $
+# $Revision: 1.60 $
+# $Date: 2021/12/10 22:50:44 $
 # $Requires: HomeVisionXL 2.1 $
 
-set version {$Id: weather.hap,v 1.59 2021/12/10 17:19:23 ron Exp $}
+set version {$Id: weather.hap,v 1.60 2021/12/10 22:50:44 ron Exp $}
 
 hvImport ControlSetVar
 hvImport debug
@@ -86,11 +86,11 @@ array set Config {
     LineLength          70
     PopPeriod           1
     WxVarConfig         {00 00 00 00 00 00 00 00 00}
-    FxVarConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
+    FxVarConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
     WxWebConfig         {00 00 00 00 00 00 00 00 00}
-    FxWebConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
+    FxWebConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
     WxMqttConfig        {00 00 00 00 00 00 00 00 00}
-    FxMqttConfig        {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
+    FxMqttConfig        {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
     Icontype            "S"
     IconsizeC           ""
     IconsizeF           ""
@@ -308,7 +308,6 @@ set LanguageVals {
     Zulu    zu
 }
 
-#set sercmdtrig 0
 set WxFcEnable "C"
 set CtlWebEnable "C"
 set WxAfter ""
@@ -338,15 +337,6 @@ proc start {} {
             set Config($n) $tmp
         }
     }
-# ################## Remove this section:
-    # 5.3 and later, remove Weatherbug choice from current and forecast data source selection.
-    if {$Config(WeatherType) eq "W"} {
-#        set Config(WeatherType)  "X" 
-    }
-    if {$Config(ForecastEnable) eq "W"} {
-#        set Config(ForecastEnable)  "X" 
-    }
-# ################## Remove above section
 
     # 3.x and earlier to 4.0: If using old time format, update to new
     # This should only run once, after upgrade.
@@ -418,6 +408,7 @@ proc start {} {
     while {[llength $Config(FxMqttConfig)] < 45} {
         lappend Config(FxMqttConfig) "00"
    }
+
     # Clear any enable flags for newly excluded items
     #  (CityCode, PressureRate, PressureRateIn, PressureRateMb
     lset Config(WxMqttConfig) 7 [format %.2X [expr {[scan [lindex $Config(WxMqttConfig) 7] %2x] & ~0x10}]]
@@ -426,9 +417,9 @@ proc start {} {
     lset Config(WxMqttConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxMqttConfig) 8] %2x] & ~0x07}]]
     lset Config(WxVarConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxVarConfig) 8] %2x] & ~0x07}]]
     lset Config(WxWebConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxWebConfig) 8] %2x] & ~0x07}]]
+
     # 5.2 and earlier to 5.3 or later: add bytes to Fx configs
     # This should only run once, after upgrade.
-
     while {[llength $Config(SpeechConfig)] < [dict size $Spcfg]} {
         lset Config(SpeechConfig) end+1 "00"
    }
@@ -3069,7 +3060,8 @@ proc parseXMLwbcur {d} {
     
     set f [string match {*fc*} $getMode]
     if {($Config(ForecastEnable) eq "W" && $f) && \
-         $Config(LocSelection) == 1} {
+         (($LinkA(wbcur) eq $LinkA(wbfc)) || \
+          $Config(LocSelection) == 1)} {
         debug "Shared OW Fetch" red
     parseXMLwbfc $d
 }
@@ -5611,7 +5603,7 @@ proc WeatherSetVar {args} {
             }
         } elseif {($Config(ForecastEnable) eq "W" && $f) && \
                 (!($Config(WeatherType)    eq "W" && $w) || \
-                 (($Config(WeatherType)    eq "W" && $w) && \
+                 (($LinkA(wbcur) ne $LinkA(wbfc)) && \
                   $Config(LocSelection) == 0))} {
             validatewb
             debug "Separate OW Fetch" red
@@ -6306,4 +6298,3 @@ start
 # Start fetching
 hvEventHook ready [list WeatherSetVar]
 hvEventHook exit [list subscribe unsub]
- 
