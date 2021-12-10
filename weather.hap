@@ -1,11 +1,11 @@
 #! Weather plug-in - Ron Boston
 #
 # Version: 5.3a
-# $Revision: 1.58 $
-# $Date: 2021/10/31 19:28:33 $
+# $Revision: 1.59 $
+# $Date: 2021/12/10 17:19:23 $
 # $Requires: HomeVisionXL 2.1 $
 
-set version {$Id: weather.hap,v 1.58 2021/10/31 19:28:33 ron Exp $}
+set version {$Id: weather.hap,v 1.59 2021/12/10 17:19:23 ron Exp $}
 
 hvImport ControlSetVar
 hvImport debug
@@ -409,13 +409,13 @@ proc start {} {
     }
     # 5.2 and earlier to 5.3 or later: add bytes to Fx configs
     # This should only run once, after upgrade.
-    while {[llength $Config(FxVarConfig)] < 31} {
+    while {[llength $Config(FxVarConfig)] < 45} {
         lappend Config(FxVarConfig) "00"
     }
-    while {[llength $Config(FxWebConfig)] < 31} {
+    while {[llength $Config(FxWebConfig)] < 45} {
         lappend Config(FxWebConfig) "00"
     }
-    while {[llength $Config(FxMqttConfig)] < 31} {
+    while {[llength $Config(FxMqttConfig)] < 45} {
         lappend Config(FxMqttConfig) "00"
    }
     # Clear any enable flags for newly excluded items
@@ -2757,6 +2757,28 @@ proc parseXMLwbfc {d} {
         set Fx(FcUvi$day) [getwxitem $dayi uvi]
         set Fx(FcUvin$day) [getwxitem $dayi uvi]
         set Fx(FcClouds$day) [getwxitem $dayi clouds]
+        set Fx(FcHumidity$day) [getwxitem $dayi humidity]
+        set Fx(FcDewpoint$day) [getwxitem $dayi dew_point]
+        
+        set Fx(FcPressureMb$day) [getwxitem $dayi pressure]
+        set Fx(FcPressureIn$day) [format "%.2f" [expr {$Fx(FcPressureMb$day)/33.864}]]
+        set Fx(FcPressureMm$day) [format "%.1f" [expr {0.750062 * $Fx(FcPressureMb$day)}]]
+        set wind_degrees [getwxitem $dayi wind_deg "NA"]
+        set wind_speed [getwxitem $dayi wind_speed "NA"]
+        set wind_gust [getwxitem $dayi wind_gust "NA"]
+        if {[tempscale] == "C"} {
+            if {$wind_speed ne "NA"} {
+                set wind_speed [expr {3.6*$wind_speed}]
+            }
+            if {$wind_gust ne "NA"} {
+                set wind_gust [expr {3.6*$wind_gust}]
+            }
+        }
+        parse_wind "" [expr {[isknown $wind_degrees]?$wind_degrees:"///"}] \
+                      [expr {[isknown $wind_speed]?$wind_speed:"//"}] \
+                      [expr {[isknown $wind_gust]?"G$wind_gust":{}}] \
+                      [expr {[tempscale] eq "F"?"MPH":"KMH"}] $day Fx
+
         set Fx(FcSunRise$day) \
             [clock format [getwxitem $dayi sunrise "NA"] -format "[timefmt]"]
         set Fx(FcSunSet$day) \
@@ -2766,7 +2788,9 @@ proc parseXMLwbfc {d} {
         set Fx(FcMoonSet$day) \
             [clock format [getwxitem $dayi moonset "NA"] -format "[timefmt]"]
         set Fx(FcMoonPhase$day) [getwxitem $dayi moon_phase NA]
-        if {$Fx(FcMoonPhase$day) == 0 || $Fx(FcMoonPhase$day) == 1} {
+        if {![isknown $Fx(FcMoonPhase$day)]} {
+            set Fx(FcMoonPhase$day) ""
+        } elseif {$Fx(FcMoonPhase$day) == 0 || $Fx(FcMoonPhase$day) == 1} {
             set Fx(FcMoonPhase$day) "New Moon"
         } elseif {$Fx(FcMoonPhase$day) < 0.25} {
             set Fx(FcMoonPhase$day) "Waxing Crescent"
@@ -2858,7 +2882,7 @@ proc parseXMLwbfc {d} {
     set ot [getwxitem $current dt]
     set ot [clock format $ot -format [timedatefmt]]
     set Fx(FcTime) $ot
-    debug $ot
+#    debug $ot
 
     debug [clock format [clock seconds] \
         -format "Forecast Fetched [timedatefmt]"] blue
@@ -2908,39 +2932,42 @@ proc parseXMLwbcur {d} {
 #    set Wx(Station) [getwxitem $json stationId "NA"]
     set station $Wx(Station)
 
+    set Wx(Uvi) [getwxitem $json uvi "NA"]
+    set Wx(Clouds) [getwxitem $json clouds "NA"]
+    set Wx(Humidity) [getwxitem $json humidity "NA"]
+    set Wx(PressureMb) [getwxitem $json pressure "NA"]
+    set Wx(FeelsLike) [getwxitem $json feels_like "NA"]
+#   Open Weather uses Temp setting to determine
+#   imperial (MPH) or metric (m/s) units.
+#   If metric, convert m/s to KPH.
+#   wxpostprocess takes care of calculating the remaining values.
     set temp [getwxitem $json temp "NA"]
     set dew_point [getwxitem $json dew_point "NA"]
+    set wind_degrees [getwxitem $json wind_deg "NA"]
     set wind_speed [getwxitem $json wind_speed "NA"]
-    set wind_gust "NA"
-#   Open Weather uses Temp setting to determine imperial or metric units
+    set wind_gust [getwxitem $json wind_gust "NA"]
     if {[tempscale] == "F"} {
         set Wx(TempF) $temp
         set Wx(DewPointF) $dew_point
-        set Wx(WindMPH) $wind_speed
     } else {
         set Wx(TempC) $temp
         set Wx(DewPointC) $dew_point
-        set Wx(WindKPH) [expr {$wind_speed*3.6}]
+        if {$wind_speed ne "NA"} {
+            set wind_speed [expr {3.6*$wind_speed}]
+        }
+        if {$wind_gust ne "NA"} {
+            set wind_gust [expr {3.6*$wind_gust}]
+        }
     }
+    parse_wind "" [expr {[isknown $wind_degrees]?$wind_degrees:"///"}] \
+                  [expr {[isknown $wind_speed]?$wind_speed:"//"}] \
+                  [expr {[isknown $wind_gust]?"G$wind_gust":{}}] \
+                  [expr {[tempscale] eq "F"?"MPH":"KMH"}] "" Wx
 
     #visibility always in meters, convert to km
     set Wx(VisibilityKm) [getwxitem $json visibility "NA"]
 #    set Wx(VisibilityKm) [expr {[getwxitem $json visibility "NA"]/1000.0}]
 
-    dict set elems feels_like FeelsLike
-    dict set elems uvi Uvi
-    dict set elems clouds Clouds
-    dict set elems humidity Humidity
-    dict set elems wind_deg WindDegrees
-    dict set elems pressure PressureMb
-
-    dict for {type name} $elems {
-        set value [getwxitem $json $type "NA"]
-        set Wx([dict get $elems $type]) $value
-#        set Wx(Uvi) 0
-#        debug "$type,$name:$value;$Wx([dict get $elems $type [tempscale]]),[dict get $elems $type [tempscale]];" blue
-    }
-    
     set gotll 0
     set lat [getwxitem $jsonr lat "NA"]
     set long [getwxitem $$jsonr lon "NA"]
@@ -2978,10 +3005,6 @@ proc parseXMLwbcur {d} {
         set Wx(Long) ""
     }
 #debug "$Wx(Lat),$Wx(Long)" red
-    parse_wind "" [expr {[isknown $Wx(WindDegrees)]?$Wx(WindDegrees):$Wx(Wind) eq "Calm"?0:"///"}] \
-                  [expr {[isknown $wind_speed]?$wind_speed:$Wx(Wind) eq "Calm"?0:"//"}] \
-                  [expr {[isknown $wind_gust]?"G$wind_gust":{}}] \
-                  [expr {[tempscale] eq "F"?"MPH":"KMH"}]
 
     set tm [getwxitem $json sunrise "NA"]
     if {$tm eq "NA"} {
@@ -3047,6 +3070,7 @@ proc parseXMLwbcur {d} {
     set f [string match {*fc*} $getMode]
     if {($Config(ForecastEnable) eq "W" && $f) && \
          $Config(LocSelection) == 1} {
+        debug "Shared OW Fetch" red
     parseXMLwbfc $d
 }
 }
@@ -3079,7 +3103,7 @@ proc parseXMLnwscur {d} {
     parse_wind "" [expr {[isknown $Wx(WindDegrees)]?$Wx(WindDegrees):$Wx(Wind) eq "Calm"?0:"///"}] \
                   [expr {[isknown $Wx(WindMPH)]?$Wx(WindMPH):$Wx(Wind) eq "Calm"?0:"//"}] \
                   [expr {[isknown $Wx(WindGustMPH)]?"G$Wx(WindGustMPH)":{}}] \
-                  "MPH"
+                  "MPH" "" Wx
 
     if {![catch {set tm [clock scan $Wx(ObservationTimerfc822) \
             -format "%a, %e %b %Y %T %Z"]}]} {
@@ -3451,7 +3475,104 @@ proc initfxdata {data} {
         FcTempMorn5     16      31      "--"
         FcTempMorn6     32      31      "--"
         FcTempMorn7     64      31      "--"
-
+        FcHumidity1     1       32      "--"
+        FcHumidity2     2       32      "--"
+        FcHumidity3     4       32      "--"
+        FcHumidity4     8       32      "--"
+        FcHumidity5     16      32      "--"
+        FcHumidity6     32      32      "--"
+        FcHumidity7     64      32      "--"
+        FcWind1         1       33      "--"
+        FcWind2         2       33      "--"
+        FcWind3         4       33      "--"
+        FcWind4         8       33      "--"
+        FcWind5         16      33      "--"
+        FcWind6         32      33      "--"
+        FcWind7         64      33      "--"
+        FcWindMPH1      1       34      "--"
+        FcWindMPH2      2       34      "--"
+        FcWindMPH3      4       34      "--"
+        FcWindMPH4      8       34      "--"
+        FcWindMPH5      16      34      "--"
+        FcWindMPH6      32      34      "--"
+        FcWindMPH7      64      34      "--"
+        FcWindKPH1      1       35      "--"
+        FcWindKPH2      2       35      "--"
+        FcWindKPH3      4       35      "--"
+        FcWindKPH4      8       35      "--"
+        FcWindKPH5      16      35      "--"
+        FcWindKPH6      32      35      "--"
+        FcWindKPH7      64      35      "--"
+        FcWindKTS1      1       36      "--"
+        FcWindKTS2      2       36      "--"
+        FcWindKTS3      4       36      "--"
+        FcWindKTS4      8       36      "--"
+        FcWindKTS5      16      36      "--"
+        FcWindKTS6      32      36      "--"
+        FcWindKTS7      64      36      "--"
+        FcWindDir1      1       37      "--"
+        FcWindDir2      2       37      "--"
+        FcWindDir3      4       37      "--"
+        FcWindDir4      8       37      "--"
+        FcWindDir5      16      37      "--"
+        FcWindDir6      32      37      "--"
+        FcWindDir7      64      37      "--"
+        FcWindDegrees1  1       38      "--"
+        FcWindDegrees2  2       38      "--"
+        FcWindDegrees3  4       38      "--"
+        FcWindDegrees4  8       38      "--"
+        FcWindDegrees5  16      38      "--"
+        FcWindDegrees6  32      38      "--"
+        FcWindDegrees7  64      38      "--"
+        FcWindGustMPH1  1       39      "--"
+        FcWindGustMPH2  2       39      "--"
+        FcWindGustMPH3  4       39      "--"
+        FcWindGustMPH4  8       39      "--"
+        FcWindGustMPH5  16      39      "--"
+        FcWindGustMPH6  32      39      "--"
+        FcWindGustMPH7  64      39      "--"
+        FcWindGustKPH1  1       40      "--"
+        FcWindGustKPH2  2       40      "--"
+        FcWindGustKPH3  4       40      "--"
+        FcWindGustKPH4  8       40      "--"
+        FcWindGustKPH5  16      40      "--"
+        FcWindGustKPH6  32      40      "--"
+        FcWindGustKPH7  64      40      "--"
+        FcWindGustKTS1  1       41      "--"
+        FcWindGustKTS2  2       41      "--"
+        FcWindGustKTS3  4       41      "--"
+        FcWindGustKTS4  8       41      "--"
+        FcWindGustKTS5  16      41      "--"
+        FcWindGustKTS6  32      41      "--"
+        FcWindGustKTS7  64      41      "--"
+        FcPressureIn1   1       42      "--"
+        FcPressureIn2   2       42      "--"
+        FcPressureIn3   4       42      "--"
+        FcPressureIn4   8       42      "--"
+        FcPressureIn5   16      42      "--"
+        FcPressureIn6   32      42      "--"
+        FcPressureIn7   64      42      "--"
+        FcPressureMb1   1       43      "--"
+        FcPressureMb2   2       43      "--"
+        FcPressureMb3   4       43      "--"
+        FcPressureMb4   8       43      "--"
+        FcPressureMb5   16      43      "--"
+        FcPressureMb6   32      43      "--"
+        FcPressureMb7   64      43      "--"
+        FcPressureMm1   1       44      "--"
+        FcPressureMm2   2       44      "--"
+        FcPressureMm3   4       44      "--"
+        FcPressureMm4   8       44      "--"
+        FcPressureMm5   16      44      "--"
+        FcPressureMm6   32      44      "--"
+        FcPressureMm7   64      44      "--"
+        FcDewpoint1     1       45      "--"
+        FcDewpoint2     2       45      "--"
+        FcDewpoint3     4       45      "--"
+        FcDewpoint4     8       45      "--"
+        FcDewpoint5     16      45      "--"
+        FcDewpoint6     32      45      "--"
+        FcDewpoint7     64      45      "--"
     } {
         set Fx($name) $default
         dict set Fxcfg $name bit $bit
@@ -4827,51 +4948,58 @@ proc mph_to_beaufort {windb bscalenm bstringnm} {
     }
 }
 
-proc parse_wind { f wd ws wg wu } {
-    global Wx Config
-#   debug "PW:$wd:$ws:$wg:$wu:" blue
+proc parse_wind { f wd ws wg wu d wfx} {
+    global Config
+        upvar #0 $wfx WFx
+
+    set p ""
+    if {$wfx eq "Fx"} {
+        set p "Fc"
+    }
+
+#   debug "PW:$wd:$ws:$wg:$wu:$p:$d:$wfx;" blue
     set calm 0
     if {$wd ne "///"} {
         if {$wd eq "VRB"} {
-            set Wx(WindDegrees) 0
-            set Wx(WindDir) [get_winddirstr $wd]
+            set WFx(${p}WindDegrees${d}) 0
+            set WFx(${p}WindDir${d}) [get_winddirstr $wd]
         } else {
-            set Wx(WindDegrees) [scan $wd "%d"]
-            set Wx(WindDir) [get_winddirstr $Wx(WindDegrees)]
-            if {$Wx(WindDegrees) == 0} {incr calm}
+            set WFx(${p}WindDegrees${d}) [scan $wd "%d"]
+            set WFx(${p}WindDir${d}) [get_winddirstr $WFx(${p}WindDegrees${d})]
+            if {$WFx(${p}WindDegrees${d}) == 0} {incr calm}
         }
-        set wxstr [format "%s" $Wx(WindDir)]
+        set wxstr [format "%s" $WFx(${p}WindDir${d})]
     } else {
-        set Wx(WindDir) "NA"
-        set Wx(WindDegrees) "NA"
+        set WFx(${p}WindDir${d}) "NA"
+        set WFx(${p}WindDegrees${d}) "NA"
         set wxstr ""
     }
     if {$ws ne "//"} {
-        set Wx(WindKPH) [scan $ws "%f"]
-        if {$Wx(WindKPH) == 0} {incr calm}
+        set WFx(${p}WindKPH${d}) [scan $ws "%f"]
+        if {$WFx(${p}WindKPH${d}) == 0} {incr calm}
         switch -exact -- $wu {
         "KT" {
-            set Wx(WindMPH) [expr {round($Wx(WindKPH) * 1.151)}]
-            set Wx(WindKTS) [expr {round($Wx(WindKPH))}]
-            set Wx(WindKPH) [expr {round($Wx(WindKPH) * 1.853)}]
+            set WFx(${p}WindMPH${d}) [expr {round($WFx(${p}WindKPH${d}) * 1.151)}]
+            set WFx(${p}WindKTS${d}) [expr {round($WFx(${p}WindKPH${d}))}]
+            set WFx(${p}WindKPH${d}) [expr {round($WFx(${p}WindKPH${d}) * 1.853)}]
         }
         "MPH" {
-            set Wx(WindMPH) [expr {round($Wx(WindKPH))}]
-            set Wx(WindKTS) [expr {round($Wx(WindKPH) * 0.869)}]
-            set Wx(WindKPH) [expr {round($Wx(WindKPH) * 1.609)}]
+            set WFx(${p}WindMPH${d}) [expr {round($WFx(${p}WindKPH${d}))}]
+            set WFx(${p}WindKTS${d}) [expr {round($WFx(${p}WindKPH${d}) * 0.869)}]
+            set WFx(${p}WindKPH${d}) [expr {round($WFx(${p}WindKPH${d}) * 1.609)}]
         }
         "MPS" {
-            set Wx(WindMPH) [expr {round($Wx(WindKPH) * 2.237)}]
-            set Wx(WindKTS) [expr {round($Wx(WindKPH) * 1.944)}]
-            set Wx(WindKPH) [expr {round($Wx(WindKPH) * 3.6)}]
+            set WFx(${p}WindMPH${d}) [expr {round($WFx(${p}WindKPH${d}) * 2.237)}]
+            set WFx(${p}WindKTS${d}) [expr {round($WFx(${p}WindKPH${d}) * 1.944)}]
+            set WFx(${p}WindKPH${d}) [expr {round($WFx(${p}WindKPH${d}) * 3.6)}]
         }
         "KMH" {
-            set Wx(WindMPH) [expr {round($Wx(WindKPH) * 0.6213)}]
-            set Wx(WindKTS) [expr {round($Wx(WindKPH) * 0.54)}]
-            set Wx(WindKPH) [expr {round($Wx(WindKPH))}]
+            set WFx(${p}WindMPH${d}) [expr {round($WFx(${p}WindKPH${d}) * 0.6213)}]
+            set WFx(${p}WindKTS${d}) [expr {round($WFx(${p}WindKPH${d}) * 0.54)}]
+            set WFx(${p}WindKPH${d}) [expr {round($WFx(${p}WindKPH${d}))}]
         }
         }
-        mph_to_beaufort $Wx(WindMPH) Wx(WindBft) Wx(beaufortstr)
+        mph_to_beaufort $WFx(${p}WindMPH${d}) WFx(${p}WindBft${d}) WFx(${p}beaufortstr${d})
 
         if {$wxstr != ""} {
             set lstr " at "
@@ -4882,47 +5010,47 @@ proc parse_wind { f wd ws wg wu } {
         }
         switch -exact -- $Config(SpeedScale) {
         "M" {
-            set wxstr [format "%s%s%d MPH" $wxstr $lstr $Wx(WindMPH)]
+            set wxstr [format "%s%s%d MPH" $wxstr $lstr $WFx(${p}WindMPH${d})]
         }
         "K" {
-            set wxstr [format "%s%s%d KPH" $wxstr $lstr $Wx(WindKPH)]
+            set wxstr [format "%s%s%d KPH" $wxstr $lstr $WFx(${p}WindKPH${d})]
         }
         "N" {
-            set wxstr [format "%s%s%d KTS" $wxstr $lstr $Wx(WindKTS)]
+            set wxstr [format "%s%s%d KTS" $wxstr $lstr $WFx(${p}WindKTS${d})]
         }
         "B" {
-            set wxstr [format "%s%s%s (%d)" $wxstr $bstr $Wx(beaufortstr) $Wx(WindBft)]
+            set wxstr [format "%s%s%s (%d)" $wxstr $bstr $WFx(${p}beaufortstr${d}) $WFx(${p}WindBft${d})]
         }
         }
     } else {
-        set Wx(WindMPH) "NA"
-        set Wx(WindKPH) "NA"
-        set Wx(WindKTS) "NA"
-        set Wx(WindBft) "NA"
+        set WFx(${p}WindMPH${d}) "NA"
+        set WFx(${p}WindKPH${d}) "NA"
+        set WFx(${p}WindKTS${d}) "NA"
+        set WFx(${p}WindBft${d}) "NA"
     }
     if {![string length $wg] == 0} {
-        set Wx(WindGustKPH) [scan [string range $wg 1 end] "%d"]
-        if {$Wx(WindGustKPH) == 0} {incr calm}
+        set WFx(${p}WindGustKPH${d}) [scan [string range $wg 1 end] "%d"]
+        if {$WFx(${p}WindGustKPH${d}) == 0} {incr calm}
         switch -exact -- $wu {
         "KT" {
-            set Wx(WindGustMPH) [expr {round($Wx(WindGustKPH) * 1.151)}]
-            set Wx(WindGustKTS) [expr {round($Wx(WindGustKPH))}]
-            set Wx(WindGustKPH) [expr {round($Wx(WindGustKPH) * 1.853)}]
+            set WFx(${p}WindGustMPH${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 1.151)}]
+            set WFx(${p}WindGustKTS${d}) [expr {round($WFx(${p}WindGustKPH${d}))}]
+            set WFx(${p}WindGustKPH${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 1.853)}]
         }
         "MPH" {
-            set Wx(WindGustMPH) [expr {round($Wx(WindGustKPH))}]
-            set Wx(WindGustKTS) [expr {round($Wx(WindGustKPH) * 0.869)}]
-            set Wx(WindGustKPH) [expr {round($Wx(WindGustKPH) * 1.609)}]
+            set WFx(${p}WindGustMPH${d}) [expr {round($WFx(${p}WindGustKPH${d}))}]
+            set WFx(${p}WindGustKTS${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 0.869)}]
+            set WFx(${p}WindGustKPH${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 1.609)}]
         }
         "MPS" {
-            set Wx(WindGustMPH) [expr {round($Wx(WindGustKPH) * 2.237)}]
-            set Wx(WindGustKTS) [expr {round($Wx(WindGustKPH) * 1.944)}]
-            set Wx(WindGustKPH) [expr {round($Wx(WindGustKPH) * 3.6)}]
+            set WFx(${p}WindGustMPH${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 2.237)}]
+            set WFx(${p}WindGustKTS${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 1.944)}]
+            set WFx(${p}WindGustKPH${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 3.6)}]
         }
         "KMH" {
-            set Wx(WindGustMPH) [expr {round($Wx(WindGustKPH) * 0.6213)}]
-            set Wx(WindGustKTS) [expr {round($Wx(WindGustKPH) * 0.54)}]
-            set Wx(WindGustKPH) [expr {round($Wx(WindGustKPH))}]
+            set WFx(${p}WindGustMPH${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 0.6213)}]
+            set WFx(${p}WindGustKTS${d}) [expr {round($WFx(${p}WindGustKPH${d}) * 0.54)}]
+            set WFx(${p}WindGustKPH${d}) [expr {round($WFx(${p}WindGustKPH${d}))}]
         }
         }
         if {$wxstr != ""} {
@@ -4932,30 +5060,30 @@ proc parse_wind { f wd ws wg wu } {
         }
         switch -exact -- $Config(SpeedScale) {
         "M" {
-            set wxstr [format "%s%s%d MPH" $wxstr $lstr $Wx(WindGustMPH)]
+            set wxstr [format "%s%s%d MPH" $wxstr $lstr $WFx(${p}WindGustMPH${d})]
         }
         "K" {
-            set wxstr [format "%s%s%d KPH" $wxstr $lstr $Wx(WindGustKPH)]
+            set wxstr [format "%s%s%d KPH" $wxstr $lstr $WFx(${p}WindGustKPH${d})]
         }
         "N" {
-            set wxstr [format "%s%s%d KTS" $wxstr $lstr $Wx(WindGustKTS)]
+            set wxstr [format "%s%s%d KTS" $wxstr $lstr $WFx(${p}WindGustKTS${d})]
         }
         }
 
     } else {
-        set Wx(WindGustMPH) "NA"
-        set Wx(WindGustKPH) "NA"
-        set Wx(WindGustKTS) "NA"
+        set WFx(${p}WindGustMPH${d}) "NA"
+        set WFx(${p}WindGustKPH${d}) "NA"
+        set WFx(${p}WindGustKTS${d}) "NA"
         incr calm
     }
     if {$calm == 3} {
-        set Wx(Wind) "Calm"
+        set WFx(${p}Wind${d}) "Calm"
     } elseif {$wxstr != ""} {
-        set Wx(Wind) $wxstr
+        set WFx(${p}Wind${d}) $wxstr
     } else {
-        set Wx(Wind) NA
+        set WFx(${p}Wind${d}) NA
     }
-#    debug "[array get Wx {Wind*}]" blue
+#    debug "[array get WFx {Wind*}]" blue
 }
 
 proc parse_wind_variability { wvf wvfnm wvfstrnm wvt wvtnm wvtstrnm } {
@@ -5236,7 +5364,7 @@ proc parseMETARnwscur { metarl mi_abbrev } {
             # Runway visibility still to be added
         } elseif {[regexp {([0-9/]{3}|VRB)([0-9/]{2,3})(G[0-9]{2,3})?(KT|KMH|MPS)} $f m wd ws wg wu]} {
             # Wind field
-            parse_wind $f $wd $ws $wg $wu
+            parse_wind $f $wd $ws $wg $wu "" Wx
         } elseif {[regexp {([0-9]{3})V([0-9]{3})} $f m wvf wvt]} {
             # Wind variability
             parse_wind_variability $wvf Wx(windvarfrom) Wx(windvarfromstr) $wvt Wx(windvarto) Wx(windvartostr)
@@ -5486,6 +5614,7 @@ proc WeatherSetVar {args} {
                  (($Config(WeatherType)    eq "W" && $w) && \
                   $Config(LocSelection) == 0))} {
             validatewb
+            debug "Separate OW Fetch" red
             if {[catch {downloadhttp wbfc $LinkA(wbfc) $now} wl]} {
                 wxfail "Fetch" WBFC $wl
             }
@@ -5948,7 +6077,7 @@ proc wxmqtt {} {
         }
     if {!$empty} {
         set json [format {{"wx":{%s}}} [join $tfmt ","]] 
-        debug "json:$json;" red
+#        debug "json:$json;" red
         if {$Config(StateTopic) ne ""} {
             if {$Config(MqttRetain)} {
                 set retain "-retain"
@@ -6010,7 +6139,7 @@ proc fcmqtt {} {
     }
     if {!$empty} {
         append json "{\"fc\":{" [format {%s} [join $fmt ""]] "}}"
-        debug "json:$json;" red
+#        debug "json:$json;" red
        
         if {$Config(StateTopic) ne ""} {
             if {$Config(MqttRetain)} {
