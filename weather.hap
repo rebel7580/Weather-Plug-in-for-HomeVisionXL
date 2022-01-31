@@ -1,11 +1,11 @@
 #! Weather plug-in - Ron Boston
 #
 # Version: 5.3b
-# $Revision: 1.60 $
-# $Date: 2021/12/10 22:50:44 $
+# $Revision: 1.61 $
+# $Date: 2022/01/30 18:59:08 $
 # $Requires: HomeVisionXL 2.1 $
 
-set version {$Id: weather.hap,v 1.60 2021/12/10 22:50:44 ron Exp $}
+set version {$Id: weather.hap,v 1.61 2022/01/30 18:59:08 ron Exp $}
 
 hvImport ControlSetVar
 hvImport debug
@@ -385,7 +385,7 @@ proc start {} {
             }
         }
     }
-    
+
     # 5.1 and earlier to 5.2 or later: add bytes to Wx configs
     # This should only run once, after upgrade.
     while {[llength $Config(WxVarConfig)] < 9} {
@@ -399,43 +399,43 @@ proc start {} {
     }
     # 5.2 and earlier to 5.3 or later: add bytes to Fx configs
     # This should only run once, after upgrade.
-    while {[llength $Config(FxVarConfig)] < 45} {
+    while {[llength $Config(FxVarConfig)] < 46} {
         lappend Config(FxVarConfig) "00"
     }
-    while {[llength $Config(FxWebConfig)] < 45} {
+    while {[llength $Config(FxWebConfig)] < 46} {
         lappend Config(FxWebConfig) "00"
     }
-    while {[llength $Config(FxMqttConfig)] < 45} {
+    while {[llength $Config(FxMqttConfig)] < 46} {
         lappend Config(FxMqttConfig) "00"
-   }
+    }
 
     # Clear any enable flags for newly excluded items
     #  (CityCode, PressureRate, PressureRateIn, PressureRateMb
     lset Config(WxMqttConfig) 7 [format %.2X [expr {[scan [lindex $Config(WxMqttConfig) 7] %2x] & ~0x10}]]
     lset Config(WxVarConfig) 7 [format %.2X [expr {[scan [lindex $Config(WxVarConfig) 7] %2x] & ~0x10}]]
     lset Config(WxWebConfig) 7 [format %.2X [expr {[scan [lindex $Config(WxWebConfig) 7] %2x] & ~0x10}]]
-    lset Config(WxMqttConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxMqttConfig) 8] %2x] & ~0x07}]]
-    lset Config(WxVarConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxVarConfig) 8] %2x] & ~0x07}]]
-    lset Config(WxWebConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxWebConfig) 8] %2x] & ~0x07}]]
+    lset Config(WxMqttConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxMqttConfig) 8] %2x] & ~0x03}]]
+    lset Config(WxVarConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxVarConfig) 8] %2x] & ~0x03}]]
+    lset Config(WxWebConfig) 8 [format %.2X [expr {[scan [lindex $Config(WxWebConfig) 8] %2x] & ~0x03}]]
 
     # 5.2 and earlier to 5.3 or later: add bytes to Fx configs
     # This should only run once, after upgrade.
     while {[llength $Config(SpeechConfig)] < [dict size $Spcfg]} {
         lset Config(SpeechConfig) end+1 "00"
-   }
+    }
 
     # 5.2 to 5.3: Add new, Delete unused
     foreach item {HVCloudVar WxMqttConfig FxMqttConfig Language CurrentTab StateTopic CmndTopic MqttRetain} {
         if {[catch {hvConfig $item}]} {
             hvConfig $item $Config($item)
-    }
+        }
     }
     foreach item {IconstyleC IconstyleF Icontype WbExpiry ConsumerSecretKey AccessCode AccessToken CityCode CityCodeFc} {
         if {![catch {hvConfig $item} tmp]} {
             hvConfig $item ""
         }
     }
-    
+
     debug "$version" red
     init
 }
@@ -545,7 +545,7 @@ debug "init" green
     set owxsearchFc ""
     if {$Config(SearchTypeFc) eq "S"} {
         if {[array names StationNames -exact "$st,lat"] ne ""} {
-        	set nwssearchFc "lat=$StationNames($st,lat)&lon=$StationNames($st,lon)"
+            set nwssearchFc "lat=$StationNames($st,lat)&lon=$StationNames($st,lon)"
             set owxsearchFc $nwssearchFc
         }
     } elseif {$Config(SearchTypeFc) eq "Z"} {
@@ -584,7 +584,7 @@ debug "init" green
         $Config(WebLink) index]
 
     subscribe
-    
+
     foreach n [lsort -dictionary [array names Config]] {
         debug "$n: $Config($n)"
     }
@@ -1311,7 +1311,7 @@ proc cfg_links {} {
 
 proc cfg_link_defaults {} {
     global tmpConfig linkConfig
-    
+
     set answer [tk_messageBox -message "Are you sure you want to set Links to defaults?" \
             -icon question -type yesno -default no \
             -detail "If \"Yes\", current Link settings will be lost."]
@@ -1344,7 +1344,7 @@ return
 
 proc cfg_help {w} {
     global tmpConfig
-    
+
     switch -- [$w tab [$w select] -text] {
         "Stations" -
         "Data Source" -
@@ -1579,15 +1579,15 @@ proc enabledatasource {w} {
             $w.f2.f6.f2.r4 state !disabled
             $w.f2.f6.f2.r4a state !disabled
         } else {
-                $w.f2.f6.f2.l4 state disabled
-                $w.f2.f6.f2.r3 state disabled
-                $w.f2.f6.f2.r4 state disabled
+            $w.f2.f6.f2.l4 state disabled
+            $w.f2.f6.f2.r3 state disabled
+            $w.f2.f6.f2.r4 state disabled
             $w.f2.f6.f2.r4a state disabled
         }
         if {$tmpConfig(ForecastEnable) eq "W"} {
-                $w.f2.f6.f2.l3 state !disabled
-                $w.f2.f6.f2.r5 state !disabled
-                $w.f2.f6.f2.r6 state !disabled
+            $w.f2.f6.f2.l3 state !disabled
+            $w.f2.f6.f2.r5 state !disabled
+            $w.f2.f6.f2.r6 state !disabled
             $w.f2.f6.f2.r6a state !disabled
         } else {
             $w.f2.f6.f2.l3 state disabled
@@ -2197,7 +2197,7 @@ proc cfgexit {{save 0}} {
         ctlvarsave
         speechsave
         set tmpConfig(StationID) [string toupper $tmpConfig(StationID)]
-        
+
         if {$Config(CmndTopic) ne $tmpConfig(CmndTopic)} {
             subscribe unsub
         }
@@ -2727,7 +2727,7 @@ proc parseXMLwbfc {d} {
     debug "parseXMLwbfc" blue
 
     if {[string trim $data] eq ""} {return -code error "No Data"}
-    
+
     initfxdata $data
 
     if {[catch {::json::json2dict $data} wxfc]} {
@@ -2750,7 +2750,7 @@ proc parseXMLwbfc {d} {
         set Fx(FcClouds$day) [getwxitem $dayi clouds]
         set Fx(FcHumidity$day) [getwxitem $dayi humidity]
         set Fx(FcDewpoint$day) [getwxitem $dayi dew_point]
-        
+
         set Fx(FcPressureMb$day) [getwxitem $dayi pressure]
         set Fx(FcPressureIn$day) [format "%.2f" [expr {$Fx(FcPressureMb$day)/33.864}]]
         set Fx(FcPressureMm$day) [format "%.1f" [expr {0.750062 * $Fx(FcPressureMb$day)}]]
@@ -2825,21 +2825,22 @@ proc parseXMLwbfc {d} {
             }
         }
 
-        set dayiw [join [dict get $dayi weather]]
-#debug "dayiw:$dayiw" red
-        set Fx(FcSc$day) [getwxitem $dayiw id]
-        set Fx(FcScn$day) [getwxitem $dayiw id]
-        set Fx(FcLc$day) \
-            [wrap [string map {&amp;deg; " " &deg; " "} [string totitle [getwxitem $dayiw description]]] $Config(LineLength)]
-        set Fx(FcLcn$day) $Fx(FcLc$day)
+        set ws [getWeatherCond $dayi]
+        debug "Weather$day:$ws" red
+        set Fx(FcWeatherCond$day) $ws
 
-        set icon [getwxitem $dayiw icon "999"]
-#debug "icon:$icon" green
+        set icon [getwxitem [lindex $ws 0] icon "999"]
+        #debug "icon:$icon" green
         if {$icon ne "999"} {
             set Fx(FcImg$day) $icon$Config(IconsizeF)$::Iconext
             set Fx(FcImgn$day) $Fx(FcImg$day)
-           lappend icons $Fx(FcImg$day)
+            lappend icons $Fx(FcImg$day)
         }
+        set Fx(FcLc$day) \
+            [wrap [string map {&amp;deg; " " &deg; " "} [string totitle [getwxitem [lindex $ws 0] description]]] $Config(LineLength)]
+        set Fx(FcLcn$day) $Fx(FcLc$day)
+        set Fx(FcSc$day) [getwxitem [lindex $ws 0] id]
+        set Fx(FcScn$day) $Fx(FcSc$day)
     }
 
     if {$day == 0} {return -code error "Empty Data"}
@@ -2883,7 +2884,7 @@ proc parseXMLwbfc {d} {
 
     debug "Forecast for $Fx(FcLoc):" blue
     varset Fx Fxcfg
-    
+
     # Get pop for pop period
     set time [clock add [clock seconds] $Config(PopPeriod) hours]
     set period [expr {[clock scan 00:00] + 86400}]
@@ -3027,16 +3028,18 @@ proc parseXMLwbcur {d} {
 
  #   set Wx(IconBase) [string range $icons 0 [string last "/" $icons]]
 
-    set jsonw [dict get $json weather]
-    set jsonw [join $jsonw]
-    set icon [getwxitem $jsonw icon "01d"]
+    set ws [getWeatherCond $json]
+    debug "Weather:$ws" red
+    set Wx(WeatherCond) $ws
+
+    set icon [getwxitem [lindex $ws 0] icon "01d"]
     if {$icon eq "null"} {
         set icon "01d"
     }
     set Wx(WeatherIcon) [format {%s%s.png} $icon $Config(IconsizeC)]
-    set Wx(Weather) [string totitle [dict get $jsonw description]]
-    set Wx(WeatherId) [dict get $jsonw id]
-    
+    set Wx(Weather) [string totitle [dict get [lindex $ws 0] description]]
+    set Wx(WeatherId) [dict get [lindex $ws 0] id]
+
     wxpostprocess
     downloadiconwb wx $Wx(WeatherIcon)
 
@@ -3057,14 +3060,14 @@ proc parseXMLwbcur {d} {
     wxweb
     wxmqtt
     wxspeech
-    
+
     set f [string match {*fc*} $getMode]
     if {($Config(ForecastEnable) eq "W" && $f) && \
          (($LinkA(wbcur) eq $LinkA(wbfc)) || \
           $Config(LocSelection) == 1)} {
         debug "Shared OW Fetch" red
-    parseXMLwbfc $d
-}
+        parseXMLwbfc $d
+    }
 }
 
 #! Parsing procedure for NWS current weather
@@ -3119,7 +3122,7 @@ proc parseXMLnwscur {d} {
     }
 
     wxpostprocess
-    downloadicon "" $Wx(IconBase)$Wx(WeatherIcon)
+   downloadicon "" $Wx(IconBase)$Wx(WeatherIcon)
 
     debug [clock format [clock seconds] \
         -format "Fetched [timedatefmt]"]
@@ -3136,6 +3139,32 @@ proc parseXMLnwscur {d} {
     wxweb
     wxmqtt
     wxspeech
+}
+
+proc getWeatherCond {json} {
+
+    set ranking {800 7 781 0 700 6 600 3 500 4 300 5 200 1 }
+    set test {200 300 500 600 700 781 800}
+    set rank {}
+    set jsonw [dict get $json weather]
+#    set jsonw {{id 513} {id 212} {id 781} {id 805}}
+    set i 0
+    debug "jsonw;$jsonw" red
+    foreach wci $jsonw {
+        debug "wci:$wci;" green
+        set found [lsearch -bisect -increasing -sorted $test [dict get $wci id]]
+        if {$found == -1} {continue}
+        lappend rank [dict get $ranking [lindex $test $found]] $i
+        debug "$i:f:$found;rank:$rank;" green
+        incr i
+    }
+    debug "sortrank:[lsort -integer [dict keys $rank]]" red
+    foreach i [lsort -integer [dict keys $rank]] {
+        lappend nws [lindex $jsonw [dict get $rank $i]]
+    }
+    debug "nws:$nws" blue
+#    lappend nws {id 601 main Snow description snow icon 13d} {id 741 main Fog description fog icon 50d}
+    return $nws
 }
 
 #! Test if weather item exists then return value
@@ -3216,22 +3245,22 @@ proc initwxdata {data stationid} {
         cloudstype      2       -8      "<unknown>"
         cloudsheight    4       -8      "<unknown>"
         ZipCode         8       8       ""
-        CityCode        16      -8       ""
+        CityCode        16      -8      ""
         SearchType      32      8       ""
         SStation        64      8       "<unknown>"
         Clouds          128     8       "--"
-        PressureRate    1       -9       "<unknown>"
-        PressureRateIn  2       -9       "<unknown>"
-        PressureRateMb  4       -9       "<unknown>"
+        PressureRate    1       -9      "<unknown>"
+        PressureRateIn  2       -9      "<unknown>"
+        WeatherCond     4       9       {}
         WeatherId       8       9       "--"
         Uvi             16      9       "--"
         FeelsLike       32      9       "--"
         SunRise         64      9       "--"
         SunSet          128     9       "--"
-        
+
     } {
         if {$name ne "Station" || $stationid eq ""} {
-        set Wx($name) $default
+            set Wx($name) $default
         }
         dict set Wxcfg $name bit $bit
         dict set Wxcfg $name byte $byte
@@ -3390,27 +3419,27 @@ proc initfxdata {data} {
         FcClouds5       16      20      "--"
         FcClouds6       32      20      "--"
         FcClouds7       64      20      "--"
-        FcMoonRise1      1      21      "--"
-        FcMoonRise2      2      21      "--"
-        FcMoonRise3      4      21      "--"
-        FcMoonRise4      8      21      "--"
-        FcMoonRise5      16     21      "--"
-        FcMoonRise6      32     21      "--"
-        FcMoonRise7      64     21      "--"
-        FcMoonSet1       1      22      "--"
-        FcMoonSet2       2      22      "--"
-        FcMoonSet3       4      22      "--"
-        FcMoonSet4       8      22      "--"
-        FcMoonSet5       16     22      "--"
-        FcMoonSet6       32     22      "--"
-        FcMoonSet7       64     22      "--"
-        FcMoonPhase1     1      23      "--"
-        FcMoonPhase2     2      23      "--"
-        FcMoonPhase3     4      23      "--"
-        FcMoonPhase4     8      23      "--"
-        FcMoonPhase5     16     23      "--"
-        FcMoonPhase6     32     23      "--"
-        FcMoonPhase7     64     23      "--"
+        FcMoonRise1     1       21      "--"
+        FcMoonRise2     2       21      "--"
+        FcMoonRise3     4       21      "--"
+        FcMoonRise4     8       21      "--"
+        FcMoonRise5     16      21      "--"
+        FcMoonRise6     32      21      "--"
+        FcMoonRise7     64      21      "--"
+        FcMoonSet1      1       22      "--"
+        FcMoonSet2      2       22      "--"
+        FcMoonSet3      4       22      "--"
+        FcMoonSet4      8       22      "--"
+        FcMoonSet5      16      22      "--"
+        FcMoonSet6      32      22      "--"
+        FcMoonSet7      64      22      "--"
+        FcMoonPhase1    1       23      "--"
+        FcMoonPhase2    2       23      "--"
+        FcMoonPhase3    4       23      "--"
+        FcMoonPhase4    8       23      "--"
+        FcMoonPhase5    16      23      "--"
+        FcMoonPhase6    32      23      "--"
+        FcMoonPhase7    64      23      "--"
         FcFLDay1        1       24      "--"
         FcFLDay2        2       24      "--"
         FcFLDay3        4       24      "--"
@@ -3565,6 +3594,13 @@ proc initfxdata {data} {
         FcDewpoint5     16      45      "--"
         FcDewpoint6     32      45      "--"
         FcDewpoint7     64      45      "--"
+        FcWeatherCond1  1       46      {}
+        FcWeatherCond2  2       46      {}
+        FcWeatherCond3  4       46      {}
+        FcWeatherCond4  8       46      {}
+        FcWeatherCond5  16      46      {}
+        FcWeatherCond6  32      46      {}
+        FcWeatherCond7  64      46      {}
     } {
         set Fx($name) $default
         dict set Fxcfg $name bit $bit
@@ -4339,7 +4375,7 @@ proc geozip {zipcode} {
         debug $json
         return
     }
-    
+
     set zips [dict get $json postalCodes]
     set city [lindex $zips 0]
     if {[dict exists $city lat] && [dict exists $city lng]} {
@@ -4496,13 +4532,13 @@ proc sethvwxvars { tag val } {
                 if {$Config(WeatherType) eq "W"} {
                     set val $Wx(WeatherId)
                 } else {
-                set val [file rootname $val]
-                if {[string equal -length 3 $val "wx_"]} {
-                    set val [string range $val 3 end]
-                }
-                if {$val ne "ra1" && ![string equal -length 4 $val "cond"]} {
-                    set val [string trimright $val "0123456789"]
-                }
+                    set val [file rootname $val]
+                    if {[string equal -length 3 $val "wx_"]} {
+                        set val [string range $val 3 end]
+                    }
+                    if {$val ne "ra1" && ![string equal -length 4 $val "cond"]} {
+                        set val [string trimright $val "0123456789"]
+                    }
                 }
                 if {[info exists IconNames($val)]} {
                     set cmd [format ",?%02X00%02X" $Config(HVWeatherVar) $IconNames($val)]
@@ -5983,7 +6019,7 @@ proc wxweb {} {
             }
         }
     }
-    if {!$empty} {wsupdate wx [format {{{%s}}} [join $tfmt ", "]]}
+    if {!$empty} {wsupdate wx [format {{{%s}}} [join $tfmt ","]]}
 }
 
 #! Send wx forecast info to json weather plug-in to send over websockets
@@ -6000,7 +6036,7 @@ proc fcweb {} {
         }
     }
     if {[llength $tfmt]} {
-        lappend fmt "{{[join $tfmt ", "]}}"
+        lappend fmt "{{[join $tfmt ","]}}"
     } else {
         lappend fmt "{}"
     }
@@ -6038,7 +6074,7 @@ proc fcweb {} {
                 }
             }
         }
-        lappend fmt "{{[join $tfmt ", "]}}"
+        lappend fmt "{{[join $tfmt ","]}}"
     }
     if {!$empty} {wsupdate fc [format {%s} [join $fmt " "]]}
 }
@@ -6051,7 +6087,20 @@ proc formatwx {n v} {
         set val "\"$val\""
     }
     #debug "formatwx: $n;$v;$val" red
-    return "\"[string tolower $n]\": $val"
+    return "\"[string tolower $n]\":$val"
+}
+
+proc formatwxcond {n v} {
+    global Wx
+    foreach cond $v {
+        set tfmt {}
+        foreach name [dict keys $cond] {
+            lappend tfmt [formatwx $name [dict get $cond $name]]
+        }
+        lappend fmt [format {{%s}} [join $tfmt ","]]
+    }
+
+    return [format {"%s":[%s]} [string tolower $n] [join $fmt ","]]
 }
 
 #! Send wx current info to MQTT
@@ -6064,11 +6113,15 @@ proc wxmqtt {} {
  #  debug "$name: [dict get $Wxcfg $name mqtt_enable]" red
         if {[dict get $Wxcfg $name mqtt_enable]} {
             set empty 0
+            if {$name eq "WeatherCond"} {
+                lappend tfmt [formatwxcond $name $Wx($name)]
+            } else {
                 lappend tfmt [formatwx $name $Wx($name)]
             }
         }
+    }
     if {!$empty} {
-        set json [format {{"wx":{%s}}} [join $tfmt ","]] 
+        set json [format {{"wx":{%s}}} [join $tfmt ","]]
 #        debug "json:$json;" red
         if {$Config(StateTopic) ne ""} {
             if {$Config(MqttRetain)} {
@@ -6076,7 +6129,7 @@ proc wxmqtt {} {
             } else {
                 set retain ""
             }
-            mqttComm {*}$retain pub $Config(StateTopic) $json 
+            mqttComm {*}$retain pub $Config(StateTopic) $json
         }
     }
 }
@@ -6116,7 +6169,11 @@ proc fcmqtt {} {
             if {[dict get $Fxcfg $longname mqtt_enable]} {
                 set empty 0
                 set dayempty 0
+                if {$name eq "WeatherCond"} {
+                     lappend tfmt [formatwxcond $name $Fx($longname)]
+                } else {
                     lappend tfmt [formatwx $name $Fx($longname)]
+                }
             }
         }
         if {!$dayempty} {
@@ -6124,7 +6181,7 @@ proc fcmqtt {} {
                 set first 0
                 lappend fmt [format {"day%d":} $i]
             } else {
-            lappend fmt [format {,"day%d":} $i]
+                lappend fmt [format {,"day%d":} $i]
             }
             lappend fmt "{[join $tfmt ","]}"
         }
@@ -6132,14 +6189,14 @@ proc fcmqtt {} {
     if {!$empty} {
         append json "{\"fc\":{" [format {%s} [join $fmt ""]] "}}"
 #        debug "json:$json;" red
-       
+
         if {$Config(StateTopic) ne ""} {
             if {$Config(MqttRetain)} {
                 set retain "-retain"
             } else {
                 set retain ""
             }
-            mqttComm {*}$retain pub $Config(StateTopic) $json 
+            mqttComm {*}$retain pub $Config(StateTopic) $json
         }
     }
 }
