@@ -66,7 +66,7 @@ The Change Log can be found in the Wiki [Here](https://github.com/rebel7580/Weat
 
 # Help
 
-Complete Help is available through the plug-in.
+While Help is available through the plug-in, it may be out-of-date. The most up-to-date version of the help file can be found in this Project's [Documentation pages](https://rebel7580.github.io/Wx/Wx_index).
 The help file is very detailed. Please read it throughly to properly set up your devices.
-Partial Help can be found in the Wiki [Here](https://github.com/rebel7580/Weather-Plug-in-For-HomeVisionXL/wiki/Introduction-to-the-Weather-Plug-in).
+
 
