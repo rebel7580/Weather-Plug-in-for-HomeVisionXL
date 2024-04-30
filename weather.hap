@@ -1,11 +1,11 @@
 #! Weather plug-in - Ron Boston
 #
-# Version: 5.3b
-# $Revision: 1.61 $
-# $Date: 2022/01/30 18:59:08 $
+# Version: 5.4
+# $Revision: 1.64 $
+# $Date: 2024/04/30 01:43:12 $
 # $Requires: HomeVisionXL 2.1 $
 
-set version {$Id: weather.hap,v 1.61 2022/01/30 18:59:08 ron Exp $}
+set version {$Id: weather.hap,v 1.64 2024/04/30 01:43:12 Ron Exp $}
 
 hvImport ControlSetVar
 hvImport debug
@@ -86,11 +86,11 @@ array set Config {
     LineLength          70
     PopPeriod           1
     WxVarConfig         {00 00 00 00 00 00 00 00 00}
-    FxVarConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
+    FxVarConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
     WxWebConfig         {00 00 00 00 00 00 00 00 00}
-    FxWebConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
+    FxWebConfig         {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
     WxMqttConfig        {00 00 00 00 00 00 00 00 00}
-    FxMqttConfig        {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
+    FxMqttConfig        {00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00}
     Icontype            "S"
     IconsizeC           ""
     IconsizeF           ""
@@ -399,13 +399,13 @@ proc start {} {
     }
     # 5.2 and earlier to 5.3 or later: add bytes to Fx configs
     # This should only run once, after upgrade.
-    while {[llength $Config(FxVarConfig)] < 46} {
+    while {[llength $Config(FxVarConfig)] < 47} {
         lappend Config(FxVarConfig) "00"
     }
-    while {[llength $Config(FxWebConfig)] < 46} {
+    while {[llength $Config(FxWebConfig)] < 47} {
         lappend Config(FxWebConfig) "00"
     }
-    while {[llength $Config(FxMqttConfig)] < 46} {
+    while {[llength $Config(FxMqttConfig)] < 47} {
         lappend Config(FxMqttConfig) "00"
     }
 
@@ -561,10 +561,10 @@ debug "init" green
     }
     array unset LinkA
     set LinkA(wbcurproto) [format \
-        {%s/data/2.5/onecall?appid=%%s&%s&units=%s&exclude=hourly,minutely,alerts&lang=%s} \
+        {%s/data/3.0/onecall?appid=%%s&%s&units=%s&exclude=hourly,minutely,alerts&lang=%s} \
         $Config(WebLinkWb) $owxsearch [expr {$units == 0 ? "metric" : "imperial"}] [dict get $LanguageVals $Config(Language)]]
     set LinkA(wbfcproto) [format \
-        {%s/data/2.5/onecall?appid=%%s&%s&units=%s&exclude=hourly,minutely,alerts&lang=%s} \
+        {%s/data/3.0/onecall?appid=%%s&%s&units=%s&exclude=hourly,minutely,alerts&lang=%s} \
         $Config(WebLinkWb) $owxsearchFc [expr {$units == 0 ? "metric" : "imperial"}] [dict get $LanguageVals $Config(Language)]]
     set LinkA(wbiconsproto) [format \
         {%s} \
@@ -2354,7 +2354,7 @@ proc imglist {i} {
 
 package require http
 package require tls 1.5.1-1.41
-::http::register https 443 [list ::tls::socket -tls1 1]
+::http::register https 443 [list ::tls::socket -tls1 1 -autoservername 1]
 package require tdom
 package require json 1.0
 
@@ -2715,8 +2715,8 @@ proc parseXMLnwsfc {d} {
     if {![info exists pop]} {set pop 255}
     sethvwxvars pop $pop
 
-    fcweb
-    fcmqtt
+    fcweb "N"
+    fcmqtt "N"
 }
 
 #! Parsing procedure for OpenWeather forecast
@@ -2826,8 +2826,9 @@ proc parseXMLwbfc {d} {
         }
 
         set ws [getWeatherCond $dayi]
-        debug "Weather$day:$ws" red
+#        debug "Weather$day:$ws" red
         set Fx(FcWeatherCond$day) $ws
+        set Fx(FcWeatherSum$day) [dict get $dayi summary]
 
         set icon [getwxitem [lindex $ws 0] icon "999"]
         #debug "icon:$icon" green
@@ -2898,8 +2899,8 @@ proc parseXMLwbfc {d} {
         sethvwxvars pop $Fx(FcPop$i)
     }
 
-    fcweb
-    fcmqtt
+    fcweb "W"
+    fcmqtt "W"
 }
 
 #! Parsing procedure for OpenWeather current weather
@@ -2917,7 +2918,7 @@ proc parseXMLwbcur {d} {
         debug $jsonr
         return -code error "Bad reply from OpenWeather.org"
     }
-    debug $jsonr blue
+#    debug $jsonr blue
 
     set json [dict get $jsonr current]
 
@@ -3026,10 +3027,10 @@ proc parseXMLwbcur {d} {
     set Wx(time-zone) [clock format $tm -format %z]
     debug "$Wx(ObservationTime)"
 
- #   set Wx(IconBase) [string range $icons 0 [string last "/" $icons]]
+#   set Wx(IconBase) [string range $icons 0 [string last "/" $icons]]
 
     set ws [getWeatherCond $json]
-    debug "Weather:$ws" red
+#    debug "Weather:$ws" red
     set Wx(WeatherCond) $ws
 
     set icon [getwxitem [lindex $ws 0] icon "01d"]
@@ -3057,8 +3058,8 @@ proc parseXMLwbcur {d} {
     sethvwxvars pressure_rate 255
     sethvwxvars clouds $Wx(Clouds)
 
-    wxweb
-    wxmqtt
+    wxweb "W"
+    wxmqtt "W"
     wxspeech
 
     set f [string match {*fc*} $getMode]
@@ -3135,9 +3136,8 @@ proc parseXMLnwscur {d} {
     foreach v [lsort -dictionary [array names Cvar]] {
         sethvwxvars $v $Wx($Cvar($v))
     }
-
-    wxweb
-    wxmqtt
+    wxweb "N"
+    wxmqtt "N"
     wxspeech
 }
 
@@ -3149,20 +3149,20 @@ proc getWeatherCond {json} {
     set jsonw [dict get $json weather]
 #    set jsonw {{id 513} {id 212} {id 781} {id 805}}
     set i 0
-    debug "jsonw;$jsonw" red
+#    debug "jsonw;$jsonw" red
     foreach wci $jsonw {
-        debug "wci:$wci;" green
+#        debug "wci:$wci;" green
         set found [lsearch -bisect -increasing -sorted $test [dict get $wci id]]
         if {$found == -1} {continue}
         lappend rank [dict get $ranking [lindex $test $found]] $i
-        debug "$i:f:$found;rank:$rank;" green
+#        debug "$i:f:$found;rank:$rank;" green
         incr i
     }
-    debug "sortrank:[lsort -integer [dict keys $rank]]" red
+#    debug "sortrank:[lsort -integer [dict keys $rank]]" red
     foreach i [lsort -integer [dict keys $rank]] {
         lappend nws [lindex $jsonw [dict get $rank $i]]
     }
-    debug "nws:$nws" blue
+#    debug "nws:$nws" blue
 #    lappend nws {id 601 main Snow description snow icon 13d} {id 741 main Fog description fog icon 50d}
     return $nws
 }
@@ -3251,7 +3251,7 @@ proc initwxdata {data stationid} {
         Clouds          128     8       "--"
         PressureRate    1       -9      "<unknown>"
         PressureRateIn  2       -9      "<unknown>"
-        WeatherCond     4       9       {}
+        WeatherCond     4       9       ""
         WeatherId       8       9       "--"
         Uvi             16      9       "--"
         FeelsLike       32      9       "--"
@@ -3594,13 +3594,20 @@ proc initfxdata {data} {
         FcDewpoint5     16      45      "--"
         FcDewpoint6     32      45      "--"
         FcDewpoint7     64      45      "--"
-        FcWeatherCond1  1       46      {}
-        FcWeatherCond2  2       46      {}
-        FcWeatherCond3  4       46      {}
-        FcWeatherCond4  8       46      {}
-        FcWeatherCond5  16      46      {}
-        FcWeatherCond6  32      46      {}
-        FcWeatherCond7  64      46      {}
+        FcWeatherCond1  1       46      ""
+        FcWeatherCond2  2       46      ""
+        FcWeatherCond3  4       46      ""
+        FcWeatherCond4  8       46      ""
+        FcWeatherCond5  16      46      ""
+        FcWeatherCond6  32      46      ""
+        FcWeatherCond7  64      46      ""
+        FcWeatherSum1   1       47      ""
+        FcWeatherSum2   2       47      ""
+        FcWeatherSum3   4       47      ""
+        FcWeatherSum4   8       47      ""
+        FcWeatherSum5   16      47      ""
+        FcWeatherSum6   32      47      ""
+        FcWeatherSum7   64      47      ""
     } {
         set Fx($name) $default
         dict set Fxcfg $name bit $bit
@@ -5497,8 +5504,8 @@ proc parseMETARnwscur { metarl mi_abbrev } {
         sethvwxvars $v $Wx($Cvar($v))
     }
 
-    wxweb
-    wxmqtt
+    wxweb "M"
+    wxmqtt "M"
     wxspeech
 }
 
@@ -5995,7 +6002,7 @@ proc WeatherGetIcon {args} {
 #! Send wx current info to json weather plug-in to send over websockets
 hvImport html_Image
 hvImport wsupdate
-proc wxweb {} {
+proc wxweb {src} {
     global Wx Config Wxcfg
 
     set empty 1
@@ -6023,7 +6030,7 @@ proc wxweb {} {
 }
 
 #! Send wx forecast info to json weather plug-in to send over websockets
-proc fcweb {} {
+proc fcweb {src} {
     global Fx Fxcfg
 
     set tfmt {}
@@ -6076,6 +6083,7 @@ proc fcweb {} {
         }
         lappend fmt "{{[join $tfmt ","]}}"
     }
+#    debug "fcweb:$fmt" red
     if {!$empty} {wsupdate fc [format {%s} [join $fmt " "]]}
 }
 
@@ -6092,6 +6100,7 @@ proc formatwx {n v} {
 
 proc formatwxcond {n v} {
     global Wx
+    
     foreach cond $v {
         set tfmt {}
         foreach name [dict keys $cond] {
@@ -6105,7 +6114,7 @@ proc formatwxcond {n v} {
 
 #! Send wx current info to MQTT
 hvImport mqttComm
-proc wxmqtt {} {
+proc wxmqtt {src} {
     global Wx Config Wxcfg
 
     set empty 1
@@ -6114,7 +6123,9 @@ proc wxmqtt {} {
         if {[dict get $Wxcfg $name mqtt_enable]} {
             set empty 0
             if {$name eq "WeatherCond"} {
+                if {$src eq "W" && $Wx($name) ne ""} {
                 lappend tfmt [formatwxcond $name $Wx($name)]
+                }
             } else {
                 lappend tfmt [formatwx $name $Wx($name)]
             }
@@ -6135,7 +6146,7 @@ proc wxmqtt {} {
 }
 
 #! Send wx forecast info to MQTT
-proc fcmqtt {} {
+proc fcmqtt {src} {
     global Fx Fxcfg Config
 
     set tfmt {}
@@ -6169,8 +6180,10 @@ proc fcmqtt {} {
             if {[dict get $Fxcfg $longname mqtt_enable]} {
                 set empty 0
                 set dayempty 0
-                if {$name eq "WeatherCond"} {
+                if {[string match {*WeatherCond*} $name]} {
+                    if {$src eq "W" && $Fx($longname) ne ""} {
                      lappend tfmt [formatwxcond $name $Fx($longname)]
+                    }
                 } else {
                     lappend tfmt [formatwx $name $Fx($longname)]
                 }
