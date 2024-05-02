@@ -38,10 +38,66 @@ For more information go to http://www.weather.gov/disclaimer.php
 
 OpenWeather.org
 
-- You can freely use OpenWeather�s products and data for non-commercial or commercial purposes by
-  crediting OpenWeather (TM) as a weather data provider in your product.
+2. Licence
+2.1 In consideration of the Fee paid by the Customer to the Supplier, receipt of which the
+Supplier hereby acknowledges, the Supplier grants to the Customer a non-exclusive,
+non-transferable licence for its own internal usage and/or to distribute Non-retrievable
+Value Added Services:
+(a) for a term of one (1) month initially from the date this Licence Agreement has
+been signed to use the Licensed Content by the Customer only.
+(b) This Licence Agreement automatically renews for successive 1-month Renewal
+Term unless either party provides written notice of non-renewal at least 7 days
+before the end of the then-current Renewal Term.
 
-- OpenWeather provide their products under Creative Commons Attribution-ShareAlike 4.0 International
-  licence (CC BY-SA 4.0).
-
-- Data and database are open and licensed by Open Data Commons Open Database License (ODbL).
+2.2 In relation to scope of use, the Customer is permitted to:
+(a) host, store, perform, display, and otherwise use the Licensed Content or any
+part of it in connection with Customer’s internal usage and/or his Distribution
+of Non-retrievable Value Added Services. The Customer is obliged to provide
+reference (attribution) to the Supplier in Customer’s products or services.
+(b) enhance, modify, adapt, transform, develop, create derivative and/or new
+works based on and/or derived from the Licensed Content or any part of it;
+(c) issue copies of and communicate and otherwise make available to the public
+the Licensed Content or any part of it in connection with Customer products or
+services;
+(d) use the Licensed Content or any part of it in combination with any other
+content;
+(e) extract data from and/or reutilise the Licensed Content; and
+(f) the Customer may make as many backup copies of the Licensed Content as may
+be necessary for its lawful use. The Customer shall record the number and
+location of all copies of the Licensed Content and take steps to prevent
+unauthorised copying.
+(g) except as expressly stated in this clause 2, the Customer has no right (and shall
+not permit any third party) to copy, reverse engineer, decompile, disassemble,
+modify, adapt or make error corrections to the Licensed Content in whole or in
+part except to the extent that any reduction of the Licensed Content to human
+readable form (whether by reverse engineering, decompilation or disassembly)
+is necessary for the purposes of integrating the operation of the Licensed
+Content with the operation of other software or systems used by the Customer
+unless the Supplier is prepared to carry out such action at a reasonable
+commercial fee or has provided the information necessary to achieve such
+integration within a reasonable period, and the Customer shall request the
+Supplier to carry out such action or to provide such information (and shall meet
+the Supplier's reasonable costs in providing that information) before
+undertaking any such reduction.
+(h) should the Customer breach any of its obligations as per this Agreement, it
+waives any rights to claim the damages or losses from the Supplier, as well as,
+cover any damages or losses that may be incurred by the Supplier of this
+breach.
+2.3 The Customer may not use any such information provided by the Supplier or obtained
+by the Customer during any such reduction permitted under this agreement to create
+any software whose expression is substantially similar to that of the Licensed Content
+nor use such information in any manner which would be restricted by any copyright
+subsisting in it.
+2.4 The Customer shall not:
+(a) sub-license, assign, distribute or novate the benefit or burden of this licence in
+whole or in part;
+(b) allow the Licensed Content to become the subject of any charge, lien or
+encumbrance; and
+(c) deal in any other manner with any or all of its rights and obligations under this
+agreement,
+without the prior written consent of the Supplier, such consent not to be unreasonably
+withheld or delayed.
+2.5 Each party confirms it is acting on its own behalf and not for the benefit of any other
+person.
+2.6 The Customer shall:
+(a) notify the Supplier as soon as it becomes aware o
