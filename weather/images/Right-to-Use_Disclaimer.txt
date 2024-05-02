@@ -36,7 +36,14 @@ Use of Weather Data and Products
 
 For more information go to http://www.weather.gov/disclaimer.php
 
-OpenWeather.org
+
+OpenWeather
+
+    Extracted from "End-User Licence", OpenWeather Ltd., 2024:
+
+    See:
+       https://openweathermap.org/storage/app/media/ow_end_user_license.pdf
+    For full details.
 
 2. Licence
 2.1 In consideration of the Fee paid by the Customer to the Supplier, receipt of which the
@@ -86,18 +93,13 @@ breach.
 2.3 The Customer may not use any such information provided by the Supplier or obtained
 by the Customer during any such reduction permitted under this agreement to create
 any software whose expression is substantially similar to that of the Licensed Content
-nor use such information in any manner which would be restricted by any copyright
-subsisting in it.
+nor use such information in any manner which would be restricted by any copyright subsisting in it.
 2.4 The Customer shall not:
-(a) sub-license, assign, distribute or novate the benefit or burden of this licence in
-whole or in part;
-(b) allow the Licensed Content to become the subject of any charge, lien or
-encumbrance; and
-(c) deal in any other manner with any or all of its rights and obligations under this
-agreement,
-without the prior written consent of the Supplier, such consent not to be unreasonably
-withheld or delayed.
-2.5 Each party confirms it is acting on its own behalf and not for the benefit of any other
-person.
+(a) sub-license, assign, distribute or novate the benefit or burden of this licence in whole or in part;
+(b) allow the Licensed Content to become the subject of any charge, lien or encumbrance; and
+(c) deal in any other manner with any or all of its rights and obligations under this agreement,
+without the prior written consent of the Supplier, such consent not to be unreasonably withheld or delayed.
+2.5 Each party confirms it is acting on its own behalf and not for the benefit of any other person.
 2.6 The Customer shall:
-(a) notify the Supplier as soon as it becomes aware o
+(a) notify the Supplier as soon as it becomes aware of any unauthorized use of the
+Licensed Content by any person or company;
